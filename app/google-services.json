@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "385926677435",
+    "firebase_url": "https://bulletinboardkotlin-6938d-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "bulletinboardkotlin-6938d",
+    "storage_bucket": "bulletinboardkotlin-6938d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:385926677435:android:8d3bb80187fd44da21fa9e",
+        "android_client_info": {
+          "package_name": "com.louro_horo24.bulletinboardapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "385926677435-0oel4488e9g85eusjsd59r9kdavu8235.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.louro_horo24.bulletinboardapp",
+            "certificate_hash": "31889f5307b5617361e1c56bab4af92cf326a760"
+          }
+        },
+        {
+          "client_id": "385926677435-a9mts4lhg6qgaojj3i97q17jb7tnhom8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnlZjNgkm6Ixx7g-k7imFVWTuE_f_tubo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "385926677435-0kivhcn0darnkrmvfqslap9uadrtgmll.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

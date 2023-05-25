@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">BulletinBoardApp</string>
+
+    <!--Строки для выдвижного меню -->
+    <string name="ad_cat1">Объявления</string>
+    <string name="ad_my_ads">Мои объявления</string>
+    <string name="ad_my_favourites">Избранное</string>
+    <string name="ad_car">Машины</string>
+    <string name="ad_realty">Недвижимость</string>
+    <string name="ad_animal">Животные</string>
+    <string name="ad_pc">Компьютеры</string>
+    <string name="ad_smartphone">Смартфоны</string>
+    <string name="ad_dm">Бытовая техника</string>
+    <string name="def">Разное</string>
+    <string name="not_reg">Войдите или зарегистрируйтесь</string>
+
+    <!--Строки для аккаунта -->
+    <string name="ad_cat2">Аккаунт</string>
+    <string name="ac_sign_up">Регистрация</string>
+    <string name="ac_sign_in">Вход</string>
+    <string name="ac_sign_out">Выйти</string>
+    <string name="link_done">Email успешно связан с Google-аккаунтом</string>
+    <string name="enter_to_google">У вас уже есть Google-аккаунт с таким Email. Зарегистрируйтесь по нему будучи авторизаванным</string>
+    <string name="open">Open</string>
+    <string name="close">Close</string>
+    <string name="anon_sign">Гость</string>
+
+    <!--Строки для Sign Dialog -->
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="sign_in_action">Войти</string>
+    <string name="sign_up_action">Зарегистрироваться</string>
+    <string name="forget_password">Забыли пароль</string>
+    <string name="sign_up_error">Не удалось зарегистрироваться</string>
+    <string name="sign_in_error">Не удалось авторизоваться</string>
+    <string name="send_verification_email_error">Не удалось отправить письмо для подтверждения</string>
+    <string name="send_verification_done">На вашу почту была отправлена ссылка для подтверждения аккаунта. Пожалуйста
+    подтвердите ваш аккаунт!</string>
+    <string name="email_reset_password_was_sent">Письмо для восстановления пароля отправлено</string>
+    <string name="dialog_reset_email_message">Для восстановления пароля введите свой Email</string>
+
+    <!--Строки для Edit Activity -->
+    <string name="select_country">*Выберите страну</string>
+    <string name="select_city">*Выберите город</string>
+    <string name="no_country">Выберите страну</string>
+    <string name="country">Страна</string>
+    <string name="city">Город</string>
+    <string name="index">Индекс</string>
+    <string name="tel">Телефон</string>
+    <string name="tel_number">*Номер телефона</string>
+    <string name="category">Категория</string>
+    <string name="title">Заголовок</string>
+    <string name="title_hint">*Название объявления</string>
+    <string name="select_category">*Выберите категорию</string>
+    <string name="price">Цена</string>
+    <string name="price_hint">*Укажите цену</string>
+    <string name="description">Описание</string>
+    <string name="description_hint">*Описание</string>
+    <string name="with_send">C отправкой</string>
+    <string name="delivery">Доставка</string>
+    <string name="publish">Опубликовать</string>
+
+    <!--Строки для ad-List_item -->
+    <string name="price_desc">Цена:</string>
+
+
+    <!--Другое -->
+    <string name="empty_ad">Пусто</string>
+
+
+
+
+
+</resources>
