@@ -25,7 +25,7 @@ class ImageAdapter: RecyclerView.Adapter<ImageAdapter.ImageHolder>() {
         holder.setData(mainArray[position])
     }
 
-    fun updateAdapter(newList: List<Bitmap>){
+    fun updateAdapter(newList: ArrayList<Bitmap>){
         mainArray.clear()
         mainArray.addAll(newList)
         notifyDataSetChanged()

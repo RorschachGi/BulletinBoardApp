@@ -1,6 +1,5 @@
 package com.louro_horo24.bulletinboardapp.accountHelper
 
-import android.app.Activity.RESULT_OK
 import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -168,10 +167,9 @@ class AccountHelper(activity: MainActivity) {
 
 
     fun signInWithGoogle(){
-
         signInClient = getSignInClient()
         val intent = signInClient.signInIntent
-        act.startActivityForResult(intent, GoogleAccConst.GOOGLE_SIGN_IN_REQUEST_CODE)
+        act.googleSignInLauncher.launch(intent)
     }
 
     fun signOutGoogle(){

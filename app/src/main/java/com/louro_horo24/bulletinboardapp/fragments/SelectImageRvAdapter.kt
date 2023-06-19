@@ -4,10 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.louro_horo24.bulletinboardapp.R
 import com.louro_horo24.bulletinboardapp.act.EditAdsActivity
@@ -37,15 +33,11 @@ class SelectImageRvAdapter(val adapterCallback: AdapterCallback): RecyclerView.A
 
     class ImageHolder(private val viewBinding: SelectImageFragItemBinding, val context: Context, val adapter: SelectImageRvAdapter) : RecyclerView.ViewHolder(viewBinding.root){
 
-        //val tvTitle = itemView.findViewById<TextView>(R.id.tvTitle)
-        //val image = itemView.findViewById<ImageView>(R.id.imageContent)
-        //val imEditImage = itemView.findViewById<ImageButton>(R.id.imEditImage)
-        //val imDeleteImage = itemView.findViewById<ImageButton>(R.id.imDelete)
-        //val pBar = itemView.findViewById<ProgressBar>(R.id.pBar)
         fun setData(bitMap: Bitmap){
 
             viewBinding.imEditImage.setOnClickListener{
-                ImagePicker.launcher(context as EditAdsActivity, context.launcherSingleSelectImage, 1)
+                //ImagePicker.launcher(context as EditAdsActivity, context.launcherSingleSelectImage, 1)
+                ImagePicker.getSingleImage(context as EditAdsActivity)
                 context.editImagePos = adapterPosition
             }
 

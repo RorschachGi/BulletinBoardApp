@@ -1,18 +1,22 @@
 package com.louro_horo24.bulletinboardapp
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import com.google.android.material.navigation.NavigationView
@@ -20,20 +24,25 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.louro_horo24.bulletinboardapp.accountHelper.AccountHelper
+import com.louro_horo24.bulletinboardapp.act.DescriptionActivity
 import com.louro_horo24.bulletinboardapp.act.EditAdsActivity
+import com.louro_horo24.bulletinboardapp.act.FilterActivity
 import com.louro_horo24.bulletinboardapp.adapters.AdsRcAdapter
 import com.louro_horo24.bulletinboardapp.databinding.ActivityMainBinding
 import com.louro_horo24.bulletinboardapp.dialoghelper.DialogConst
 import com.louro_horo24.bulletinboardapp.dialoghelper.DialogHelper
-import com.louro_horo24.bulletinboardapp.dialoghelper.GoogleAccConst
 import com.louro_horo24.bulletinboardapp.model.Ad
+import com.louro_horo24.bulletinboardapp.utils.CircleTransform
 import com.louro_horo24.bulletinboardapp.viewmodel.FirebaseViewModel
+import com.squareup.picasso.Picasso
 
 //OnNavigationItemSelectedListener
 //NavigationView.OnNavigationItemSelectedListener
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, AdsRcAdapter.Listener {
 
     private lateinit var tvAccount: TextView
+
+    private lateinit var imAccount: ImageView
 
     lateinit var binding: ActivityMainBinding
 
@@ -45,7 +54,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     val adapter = AdsRcAdapter(this)
 
+    lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
+
+    lateinit var filterLauncher: ActivityResultLauncher<Intent>
+
     private val firebaseViewModel: FirebaseViewModel by viewModels()
+
+    private var clearUpdate: Boolean = true
+
+    private var currentCategory: String? = null
+
+    private var filter: String = "empty"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,27 +73,39 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         init()
         initRecyclerView()
         initViewModel()
-        firebaseViewModel.loadAllAds()
+        //firebaseViewModel.loadAllAds("0")
         bottomMenuOnClick()
+        scrollListener()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if(requestCode == GoogleAccConst.GOOGLE_SIGN_IN_REQUEST_CODE){
+    private fun onActivityResult() {
 
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+        googleSignInLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(it.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                if(account != null){
+                if (account != null) {
                     dialogHelper.accHelper.signInFirebaseWithGoogle(account.idToken!!)
                 }
-            }catch (e: ApiException){
+            } catch (e: ApiException) {
                 Log.d("MyLog", "Api error: ${e.message}")
             }
         }
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
-    //currentUser - если не зарегестрирован вернет null, иначе вернет user
+    private fun onActivityResultFilter(){
+        filterLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()){
+                if(it.resultCode == RESULT_OK){
+                    filter = it.data?.getStringExtra(FilterActivity.FILTER_KEY)!!
+                    Log.d("MyLog", "Filter: $filter")
+                }
+        }
+    }
+
+    //currentUser - если не зарегистрирован вернет null, иначе вернет user
     override fun onStart() {
         super.onStart()
         uiUpdate(myAuth.currentUser)
@@ -87,14 +118,39 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private fun initViewModel(){
         firebaseViewModel.liveAdsData.observe(this, {
-            adapter.updateAdapter(it)
-            binding.includeID.tvEmpty.visibility = if(it.isEmpty()) View.VISIBLE else View.GONE
+            val list = getAdsByCategory(it)
+            if(!clearUpdate){
+                adapter.updateAdapter(list)
+            }else{
+                adapter.updateWithClearAdapter(list)
+            }
+            binding.includeID.tvEmpty.visibility = if(adapter.itemCount == 0) View.VISIBLE else View.GONE
         })
+    }
+
+    //Оставляем только объявления только конкретной категории при необходимости
+    private fun getAdsByCategory(list: ArrayList<Ad>): ArrayList<Ad>{
+        val tempList = ArrayList<Ad>()
+        tempList.addAll(list)
+        if(currentCategory != getString(R.string.def)){
+            tempList.clear()
+            list.forEach{
+                if(currentCategory == it.category) tempList.add(it)
+            }
+        }
+        tempList.reverse()
+        return tempList
     }
 
     private fun init() {
 
+        currentCategory = getString(R.string.def)
+
         setSupportActionBar(binding.includeID.toolbar)
+
+        onActivityResult()
+
+        onActivityResultFilter()
 
         //Создание кнопки в Toolbar для открытия NavigationView
         val toggle = ActionBarDrawerToggle(
@@ -110,59 +166,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         //navView будет передавать события ( нажатия ) в этот же класс
         binding.navView.setNavigationItemSelectedListener(this)
 
-        //Получаем доступ к TextView в header
+        //Получаем доступ к TextView и ImageView в header
         tvAccount = binding.navView.getHeaderView(0).findViewById(R.id.tvAccountEmail)
 
+        imAccount = binding.navView.getHeaderView(0).findViewById(R.id.imAccountImage)
 
-        /*binding.navView.setNavigationItemSelectedListener {
-            when (it.itemId) {
-                R.id.id_my_ads -> {
-                    Toast.makeText(this, "Presed id_my_ads", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_car -> {
-                    Toast.makeText(this, "Presed id_car", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_pc -> {
-                    Toast.makeText(this, "Presed id_pc", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_smart -> {
-                    Toast.makeText(this, "Presed id_smart", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_dm -> {
-                    Toast.makeText(this, "Presed id_dm", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_realty -> {
-                    Toast.makeText(this, "Presed id_realty", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_animal -> {
-                    Toast.makeText(this, "Presed id_animal", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_sign_up -> {
-                    Toast.makeText(this, "Presed id_sign_up", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_sign_in -> {
-                    Toast.makeText(this, "Presed id_sign_in", Toast.LENGTH_SHORT).show()
-                }
-
-                R.id.id_sign_out -> {
-                    Toast.makeText(this, "Presed id_sign_out", Toast.LENGTH_SHORT).show()
-                }
-            }
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }*/
     }
 
     private fun bottomMenuOnClick() = with(binding){
         includeID.bNavView.setOnNavigationItemSelectedListener { item ->
+            clearUpdate = true
             when(item.itemId){
                 R.id.id_new_add -> {
                     val i = Intent(this@MainActivity, EditAdsActivity::class.java)
@@ -177,7 +190,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     includeID.toolbar.title = getString(R.string.ad_my_favourites)
                 }
                 R.id.id_home ->{
-                    firebaseViewModel.loadAllAds()
+                    currentCategory = getString(R.string.def)
+                    firebaseViewModel.loadAllAdsFirstPage()
                     includeID.toolbar.title = getString(R.string.def)
                 }
             }
@@ -196,40 +210,60 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return super.onCreateOptionsMenu(menu)
     }
 
+    //Запуск фильтр activity
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == R.id.id_filter){
+            val i = Intent(this@MainActivity, FilterActivity::class.java).apply{
+                putExtra(FilterActivity.FILTER_KEY, filter)
+            }
+            filterLauncher.launch(i)
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        clearUpdate = true
         when (item.itemId) {
 
             R.id.id_my_ads -> {
                 Toast.makeText(this, "Pressed id_my_ads", Toast.LENGTH_SHORT).show()
+                binding.includeID.toolbar.title = getString(R.string.ad_my_ads)
             }
 
             R.id.id_car -> {
-                Toast.makeText(this, "Pressed id_car", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_car))
+                binding.includeID.toolbar.title = getString(R.string.ad_car)
             }
 
             R.id.id_pc -> {
-                Toast.makeText(this, "Pressed id_pc", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_pc))
+                binding.includeID.toolbar.title = getString(R.string.ad_pc)
             }
 
             R.id.id_smart -> {
-                Toast.makeText(this, "Pressed id_smart", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_smartphone))
+                binding.includeID.toolbar.title = getString(R.string.ad_smartphone)
             }
 
             R.id.id_dm -> {
-                Toast.makeText(this, "Pressed id_dm", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_dm))
+                binding.includeID.toolbar.title = getString(R.string.ad_dm)
             }
 
             R.id.id_realty -> {
-                Toast.makeText(this, "Pressed id_realty", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_realty))
+                binding.includeID.toolbar.title = getString(R.string.ad_realty)
             }
 
             R.id.id_animal -> {
-                Toast.makeText(this, "Pressed id_animal", Toast.LENGTH_SHORT).show()
+                getAdsFromCat(getString(R.string.ad_animal))
+                binding.includeID.toolbar.title = getString(R.string.ad_animal)
             }
 
             R.id.id_sign_up -> {
@@ -257,6 +291,11 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
+    private fun getAdsFromCat(cat: String){
+        currentCategory = cat
+        firebaseViewModel.loadAllAdsFromCat(cat)
+    }
+
     fun uiUpdate(user: FirebaseUser?){
 
         if(user == null){
@@ -264,19 +303,64 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             dialogHelper.accHelper.signInAnonymously(object : AccountHelper.onCompleteListener{
                 override fun onComplete() {
                     tvAccount.text = resources.getString(R.string.anon_sign)
+                    imAccount.setImageResource(R.drawable.ic_account_def)
                 }
             })
         }else if(user.isAnonymous){
             tvAccount.text = resources.getString(R.string.anon_sign)
+            imAccount.setImageResource(R.drawable.ic_account_def)
         }else if(!user.isAnonymous){
             tvAccount.text = user.email
+            Picasso.get().load(user.photoUrl).transform(CircleTransform()).into(imAccount)
         }
 
     }
 
-    companion object {
-        const val EDIT_STATE = "edit_state"
-        const val ADS_DATA = "ads_data"
+    /*
+        Пагинация
+        addOnScrollListener - слушатель скролла в списке.
+        Когда проскролили до конца срабатывает метод
+        onScrollStateChanged - когда изменяется состояние при скролле
+        newState - cостояние списка
+     */
+    private fun scrollListener() = with(binding.includeID){
+
+        rcView.addOnScrollListener(object: RecyclerView.OnScrollListener(){
+
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if(!recyclerView.canScrollVertically(SCROLL_DOWN) && newState == RecyclerView.SCROLL_STATE_IDLE){
+
+                    clearUpdate = false
+
+                    val adsList = firebaseViewModel.liveAdsData.value!!
+
+                    if(adsList.isNotEmpty()){
+                        getAdsFromCat(adsList)
+                    }
+
+                }
+            }
+        })
+    }
+
+    //Определение категории для подгрузки объявлений в scrollListener
+    private fun getAdsFromCat(adsList: ArrayList<Ad>){
+        adsList[0].let {
+
+            if (currentCategory == getString(R.string.def)) {
+                firebaseViewModel.loadAllAdsNextPage(it.time)
+            } else {
+                val catTime = "${it.category}_${it.time}"
+                firebaseViewModel.loadAllAdsFromCatNextPage(catTime)
+            }
+
+        }
+    }
+
+
+    private fun navViewSettings() = with(binding.includeID){
+
     }
 
     override fun onDeleteItem(ad: Ad) {
@@ -285,9 +369,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onAdViewed(ad: Ad) {
         firebaseViewModel.adViewed(ad)
+        val i = Intent(this, DescriptionActivity::class.java)
+        i.putExtra(ADS_DESK, ad)
+        startActivity(i)
     }
 
     override fun onFavClicked(ad: Ad) {
         firebaseViewModel.onFavClick(ad)
+    }
+
+    companion object {
+        const val EDIT_STATE = "edit_state"
+        const val ADS_DATA = "ads_data"
+        const val ADS_DESK = "ads_desc"
+        const val SCROLL_DOWN = 1
     }
 }

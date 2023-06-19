@@ -1,14 +1,22 @@
 package com.louro_horo24.bulletinboardapp.utils
 
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.widget.ImageView
+import androidx.core.net.toUri
 import androidx.exifinterface.media.ExifInterface
+import com.louro_horo24.bulletinboardapp.adapters.ImageAdapter
+import com.louro_horo24.bulletinboardapp.model.Ad
 import com.squareup.picasso.Picasso
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 import java.io.File
+import java.io.InputStream
 
 object ImageManager {
 
@@ -17,7 +25,8 @@ object ImageManager {
     const val HEIGHT = 1
 
     //Получаем ширину и высоту изображения
-    fun getImageSize(uri: String): List<Int>{
+    /*fun getImageSize(uri: String): List<Int>{
+
 
         val options = BitmapFactory.Options().apply{
             inJustDecodeBounds = true
@@ -31,32 +40,25 @@ object ImageManager {
             listOf(options.outWidth, options.outHeight)
         }
 
-    }
+    }*/
 
-    //Получаем ориентацию экрана ( верт/горизонт)
-    private fun imageRotation(uri: String): Int{
+    fun getImageSize(uri: Uri, act: Activity): List<Int> {
 
-        val rotation: Int
+        val inStream = act.contentResolver.openInputStream(uri)
 
-        //Получаем файл по ссылке, чтобы считать данные об ориентации
-        val imageFile = File(uri)
-
-        val exif = ExifInterface(imageFile.absolutePath)
-
-        val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-
-        rotation = if(orientation == ExifInterface.ORIENTATION_ROTATE_90 || orientation == ExifInterface.ORIENTATION_ROTATE_270){
-            90
-        }else{
-            0
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
         }
 
-        return rotation
+        BitmapFactory.decodeStream(inStream, null, options)
+
+        return listOf(options.outWidth, options.outHeight)
+
+
     }
 
-    //Изменяем размеры изображения при необходимости
-    //Сжатие изображений трудоемкий процесс, используем Coroutine
-    suspend fun imageResize(uris: List<String>): List<Bitmap> = withContext(Dispatchers.IO){
+
+    suspend fun imageResize(uris: List<Uri>, act: Activity): List<Bitmap> = withContext(Dispatchers.IO){
 
         //для хранения ширины и высоты изображений
         val tempList = ArrayList<List<Int>>()
@@ -65,7 +67,7 @@ object ImageManager {
 
         for(n in uris.indices){
 
-            val size = getImageSize(uris[n])
+            val size = getImageSize(uris[n], act)
 
             //Вычисляем пропорцию. Делим ширину на высоту
             val imageRatio = size[WIDTH].toFloat() / size[HEIGHT].toFloat()
@@ -80,7 +82,7 @@ object ImageManager {
                     tempList.add(listOf(size[WIDTH], size[HEIGHT]))
                 }
 
-            //Если высота больше ширины
+                //Если высота больше ширины
             }else{
 
                 if(size[HEIGHT] > MAX_IMAGE_SIZE ){
@@ -94,7 +96,9 @@ object ImageManager {
 
         //Сжатие изображений
         for(i in uris.indices){
-            bitmapList.add(Picasso.get().load(File(uris[i])).resize(tempList[i][WIDTH], tempList[i][HEIGHT]).get())
+            kotlin.runCatching {
+                bitmapList.add(Picasso.get().load((uris[i])).resize(tempList[i][WIDTH], tempList[i][HEIGHT]).get())
+            }
         }
 
 
@@ -108,6 +112,28 @@ object ImageManager {
             im.scaleType = ImageView.ScaleType.CENTER_CROP
         }else{
             im.scaleType = ImageView.ScaleType.CENTER_INSIDE
+        }
+    }
+
+    //Из String в Bitmap
+    private suspend fun getBitmapFromUris(uris: List<String?>): List<Bitmap> = withContext(Dispatchers.IO){
+
+        val bitmapList = ArrayList<Bitmap>()
+
+        for(i in uris.indices){
+            kotlin.runCatching {
+                bitmapList.add(Picasso.get().load(uris[i]).get())
+            }
+        }
+
+        return@withContext bitmapList
+    }
+
+    fun fieldImageArray(ad: Ad, adapter: ImageAdapter){
+        val listUris = listOf(ad.mainImage, ad.image2, ad.image3)
+        CoroutineScope(Dispatchers.Main).launch {
+            val bitmapList = getBitmapFromUris(listUris)
+            adapter.updateAdapter(bitmapList as ArrayList<Bitmap>)
         }
     }
 

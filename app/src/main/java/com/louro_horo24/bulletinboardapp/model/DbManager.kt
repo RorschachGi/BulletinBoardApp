@@ -7,12 +7,16 @@ import com.google.firebase.database.Query
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 
 
 class DbManager{
 
-    //Чтобы читать или записывать данные из базы данных, нужен экземпляр DatabaseReference :
+    //Чтобы читать или записывать данные из базы данных, нужен экземпляр DatabaseReference
     val db = Firebase.database.getReference(MAIN_NODE)
+
+    //Для передачи изображений в Firebase Storage нужен экземлпяр StorageReference
+    val dbStorage = Firebase.storage.getReference(MAIN_NODE)
 
     val auth = Firebase.auth
 
@@ -23,10 +27,15 @@ class DbManager{
         if (auth.uid != null) {
             db.child(ad.key ?: "empty").child(auth.uid!!).child(AD_NODE).setValue(ad)
                 .addOnCompleteListener {
-                    finishListener.onFinish()
+
+                    val adFilter = AdFilter(ad.time, "${ad.category}_${ad.time}") //cars_12432534
+                    db.child(ad.key ?: "empty").child(FILTER_NODE).setValue(adFilter)
+                        .addOnCompleteListener {
+                            finishListener.onFinish()
+                        }
+
                 }
         }
-
     }
 
     //Обновление счетчика просмотров объявления
@@ -87,11 +96,29 @@ class DbManager{
         readDataFromDb(query, readDataCallback)
     }
 
-    //Получение всех объявлений
-    fun getAllAds(readDataCallback: ReadDataCallback?){
-        val query = db.orderByChild(auth.uid + "/ad/price")
+    //Получение всех объявлений, первая страница
+    //limitToFirst - выдавать определенное количество объявлений ( пагинация )
+    fun getAllAdsFirstPage(readDataCallback: ReadDataCallback?){
+        val query = db.orderByChild("/adFilter/time").limitToLast(ADS_LIMIT)
         readDataFromDb(query, readDataCallback)
     }
+
+    fun getAllAdsNextPage(time: String, readDataCallback: ReadDataCallback?){
+        val query = db.orderByChild("/adFilter/time").endBefore(time).limitToLast(ADS_LIMIT)
+        readDataFromDb(query, readDataCallback)
+    }
+
+
+    fun getAllAdsFromCatFirstPage(cat: String, readDataCallback: ReadDataCallback?){
+        val query = db.orderByChild("/adFilter/catTime").startAt(cat).endAt(cat + "_\uf8ff").limitToLast(ADS_LIMIT)
+        readDataFromDb(query, readDataCallback)
+    }
+
+    fun getAllAdsFromCatNextPage(catTime: String, readDataCallback: ReadDataCallback?){
+        val query = db.orderByChild("/adFilter/catTime").endBefore(catTime).limitToLast(ADS_LIMIT)
+        readDataFromDb(query, readDataCallback)
+    }
+
 
     //Удаление объявления
     fun deleteAd(ad: Ad, listener: FinishWorkListener){
@@ -152,9 +179,11 @@ class DbManager{
 
     companion object{
         const val AD_NODE = "ad"
+        const val FILTER_NODE = "adFilter"
         const val MAIN_NODE = "main"
         const val INFO_NODE = "info"
         const val FAVS_NODE = "favs"
+        const val ADS_LIMIT= 2
 
     }
 

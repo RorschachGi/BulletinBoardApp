@@ -67,8 +67,18 @@
     <!--Другое -->
     <string name="empty_ad">Пусто</string>
 
+    <!--Строки для Description Activity -->
+    <string name="tel_desk">Телефон:</string>
+    <string name="email_desk">Email:</string>
+    <string name="country_desk">Страна:</string>
+    <string name="city_desk">Город:</string>
+    <string name="index_desk">Индекс:</string>
+    <string name="with_send_desk">C отправкой:</string>
+    <string name="with_send_true">Да</string>
+    <string name="with_send_false">Нет</string>
 
-
+    <!--Строки для Filter Activity -->
+    <string name="button_filter">Применить фильтр</string>
 
 
 </resources>

@@ -9,9 +9,11 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.louro_horo24.bulletinboardapp.MainActivity
 import com.louro_horo24.bulletinboardapp.R
+import com.louro_horo24.bulletinboardapp.act.DescriptionActivity
 import com.louro_horo24.bulletinboardapp.act.EditAdsActivity
 import com.louro_horo24.bulletinboardapp.model.Ad
 import com.louro_horo24.bulletinboardapp.databinding.AdListItemBinding
+import com.squareup.picasso.Picasso
 
 class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdHolder>() {
 
@@ -39,21 +41,36 @@ class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdH
             tvTitle.text = ad.title
             tvViewCounter.text = ad.viewsCounter
             tvFavCounter.text = ad.favCounter
-            if(ad.isFav){
-                ibFav.setImageResource(R.drawable.ic_fav_pressed)
-            }else{
-                ibFav.setImageResource(R.drawable.ic_fav_normal)
-            }
+            Picasso.get().load(ad.mainImage).into(mainImage)
+
+
+            isFav(ad)
+            showEditPanel(isOwner(ad))
+            mainOnClick(ad)
+        }
+
+        private fun mainOnClick(ad: Ad) = with(binding){
             ibFav.setOnClickListener {
                 if(act.myAuth.currentUser?.isAnonymous == false) act.onFavClicked(ad)
             }
-            showEditPanel(isOwner(ad))
+
             ibEditAd.setOnClickListener(onClickEdit(ad))
+
             ibDeleteAd.setOnClickListener{
                 act.onDeleteItem(ad)
             }
+
             itemView.setOnClickListener{
                 act.onAdViewed(ad)
+            }
+
+        }
+
+        private fun isFav(ad: Ad){
+            if(ad.isFav){
+                binding.ibFav.setImageResource(R.drawable.ic_fav_pressed)
+            }else{
+                binding.ibFav.setImageResource(R.drawable.ic_fav_normal)
             }
         }
 
@@ -66,6 +83,7 @@ class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdH
                 editIntent.putExtra(MainActivity.EDIT_STATE, true)
 
                 editIntent.putExtra(MainActivity.ADS_DATA, ad)
+
                 act.startActivity(editIntent)
             }
         }
@@ -87,11 +105,23 @@ class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdH
     }
 
     fun updateAdapter(newList: List<Ad>){
+        val tempArray = ArrayList<Ad>()
+        tempArray.addAll(adArray)
+        tempArray.addAll(newList)
+
+        val diffResul = DiffUtil.calculateDiff(DiffUtilHelper(adArray, tempArray))
+        diffResul.dispatchUpdatesTo(this)
+        adArray.clear()
+        adArray.addAll(tempArray)
+    }
+
+    fun updateWithClearAdapter(newList: List<Ad>){
         val diffResul = DiffUtil.calculateDiff(DiffUtilHelper(adArray, newList))
         diffResul.dispatchUpdatesTo(this)
         adArray.clear()
         adArray.addAll(newList)
     }
+
 
     interface Listener{
         fun onDeleteItem(ad: Ad)

@@ -13,14 +13,44 @@ class FirebaseViewModel: ViewModel() {
     val liveAdsData = MutableLiveData<ArrayList<Ad>>()
 
     //Передача данных в liveAdsData ( списка объявлений )
-    fun loadAllAds(){
-        dbManager.getAllAds(object: DbManager.ReadDataCallback{
+    //Загрузка первой страницы
+    fun loadAllAdsFirstPage(){
+        dbManager.getAllAdsFirstPage(object: DbManager.ReadDataCallback{
             override fun readData(list: ArrayList<Ad>) {
                 liveAdsData.value = list
             }
 
         })
     }
+
+    fun loadAllAdsNextPage(time: String){
+        dbManager.getAllAdsNextPage(time, object: DbManager.ReadDataCallback{
+            override fun readData(list: ArrayList<Ad>) {
+                liveAdsData.value = list
+            }
+
+        })
+    }
+
+    //Получение объявлений по категории
+    fun loadAllAdsFromCat(cat: String){
+        dbManager.getAllAdsFromCatFirstPage(cat, object: DbManager.ReadDataCallback{
+            override fun readData(list: ArrayList<Ad>) {
+                liveAdsData.value = list
+            }
+
+        })
+    }
+
+    fun loadAllAdsFromCatNextPage(catTime: String){
+        dbManager.getAllAdsFromCatNextPage(catTime, object: DbManager.ReadDataCallback{
+            override fun readData(list: ArrayList<Ad>) {
+                liveAdsData.value = list
+            }
+
+        })
+    }
+
 
     fun loadMyAds(){
         dbManager.getMyAds(object : DbManager.ReadDataCallback{
