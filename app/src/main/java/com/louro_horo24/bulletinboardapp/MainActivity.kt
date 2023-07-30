@@ -33,6 +33,7 @@ import com.louro_horo24.bulletinboardapp.dialoghelper.DialogConst
 import com.louro_horo24.bulletinboardapp.dialoghelper.DialogHelper
 import com.louro_horo24.bulletinboardapp.model.Ad
 import com.louro_horo24.bulletinboardapp.utils.CircleTransform
+import com.louro_horo24.bulletinboardapp.utils.FilterManager
 import com.louro_horo24.bulletinboardapp.viewmodel.FirebaseViewModel
 import com.squareup.picasso.Picasso
 
@@ -66,6 +67,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private var filter: String = "empty"
 
+    private var filterDb: String = ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -73,9 +76,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         init()
         initRecyclerView()
         initViewModel()
-        //firebaseViewModel.loadAllAds("0")
         bottomMenuOnClick()
         scrollListener()
+        onActivityResultFilter()
     }
 
     private fun onActivityResult() {
@@ -101,11 +104,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                 if(it.resultCode == RESULT_OK){
                     filter = it.data?.getStringExtra(FilterActivity.FILTER_KEY)!!
                     Log.d("MyLog", "Filter: $filter")
+                    Log.d("MyLog", "GetFilter: ${FilterManager.getFilter(filter)}")
+                    filterDb = FilterManager.getFilter(filter)
+                }else if(it.resultCode == RESULT_CANCELED){
+                    filterDb = ""
+                    filter = "empty"
                 }
         }
     }
 
-    //currentUser - если не зарегистрирован вернет null, иначе вернет user
     override fun onStart() {
         super.onStart()
         uiUpdate(myAuth.currentUser)
@@ -116,26 +123,27 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         binding.includeID.bNavView.selectedItemId = R.id.id_home
     }
 
-    private fun initViewModel(){
+    private fun initViewModel() {
         firebaseViewModel.liveAdsData.observe(this, {
             val list = getAdsByCategory(it)
-            if(!clearUpdate){
+            if (!clearUpdate) {
                 adapter.updateAdapter(list)
-            }else{
+            } else {
                 adapter.updateWithClearAdapter(list)
             }
-            binding.includeID.tvEmpty.visibility = if(adapter.itemCount == 0) View.VISIBLE else View.GONE
+            binding.includeID.tvEmpty.visibility =
+                if (adapter.itemCount == 0) View.VISIBLE else View.GONE
         })
     }
 
     //Оставляем только объявления только конкретной категории при необходимости
-    private fun getAdsByCategory(list: ArrayList<Ad>): ArrayList<Ad>{
+    private fun getAdsByCategory(list: ArrayList<Ad>): ArrayList<Ad> {
         val tempList = ArrayList<Ad>()
         tempList.addAll(list)
-        if(currentCategory != getString(R.string.def)){
+        if (currentCategory != getString(R.string.def)) {
             tempList.clear()
-            list.forEach{
-                if(currentCategory == it.category) tempList.add(it)
+            list.forEach {
+                if (currentCategory == it.category) tempList.add(it)
             }
         }
         tempList.reverse()
@@ -149,8 +157,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setSupportActionBar(binding.includeID.toolbar)
 
         onActivityResult()
-
-        onActivityResultFilter()
 
         //Создание кнопки в Toolbar для открытия NavigationView
         val toggle = ActionBarDrawerToggle(
@@ -173,25 +179,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
-    private fun bottomMenuOnClick() = with(binding){
+    private fun bottomMenuOnClick() = with(binding) {
         includeID.bNavView.setOnNavigationItemSelectedListener { item ->
             clearUpdate = true
-            when(item.itemId){
+            when (item.itemId) {
                 R.id.id_new_add -> {
                     val i = Intent(this@MainActivity, EditAdsActivity::class.java)
                     startActivity(i)
                 }
-                R.id.id_my_ads ->{
+                R.id.id_my_ads -> {
                     firebaseViewModel.loadMyAds()
                     includeID.toolbar.title = getString(R.string.ad_my_ads)
                 }
-                R.id.id_favs ->{
+                R.id.id_favs -> {
                     firebaseViewModel.loadMyFavs()
                     includeID.toolbar.title = getString(R.string.ad_my_favourites)
                 }
-                R.id.id_home ->{
+                R.id.id_home -> {
                     currentCategory = getString(R.string.def)
-                    firebaseViewModel.loadAllAdsFirstPage()
+                    firebaseViewModel.loadAllAdsFirstPage(filterDb)
                     includeID.toolbar.title = getString(R.string.def)
                 }
             }
@@ -200,7 +206,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     //Инициализируем RecyclerView
-    private fun initRecyclerView(){
+    private fun initRecyclerView() {
 
         binding.apply {
 
@@ -218,8 +224,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     //Запуск фильтр activity
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.id_filter){
-            val i = Intent(this@MainActivity, FilterActivity::class.java).apply{
+        if (item.itemId == R.id.id_filter) {
+            val i = Intent(this@MainActivity, FilterActivity::class.java).apply {
                 putExtra(FilterActivity.FILTER_KEY, filter)
             }
             filterLauncher.launch(i)
@@ -275,7 +281,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
 
             R.id.id_sign_out -> {
-                if(myAuth.currentUser?.isAnonymous == true) {
+                if (myAuth.currentUser?.isAnonymous == true) {
                     binding.drawerLayout.closeDrawer(GravityCompat.START)
                     return true
                 }
@@ -291,25 +297,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    private fun getAdsFromCat(cat: String){
+    private fun getAdsFromCat(cat: String) {
         currentCategory = cat
-        firebaseViewModel.loadAllAdsFromCat(cat)
+        firebaseViewModel.loadAllAdsFromCat(cat, filterDb)
     }
 
-    fun uiUpdate(user: FirebaseUser?){
+    fun uiUpdate(user: FirebaseUser?) {
 
-        if(user == null){
+        if (user == null) {
             resources.getString(R.string.not_reg)
-            dialogHelper.accHelper.signInAnonymously(object : AccountHelper.onCompleteListener{
+            dialogHelper.accHelper.signInAnonymously(object : AccountHelper.onCompleteListener {
                 override fun onComplete() {
                     tvAccount.text = resources.getString(R.string.anon_sign)
                     imAccount.setImageResource(R.drawable.ic_account_def)
                 }
             })
-        }else if(user.isAnonymous){
+        } else if (user.isAnonymous) {
             tvAccount.text = resources.getString(R.string.anon_sign)
             imAccount.setImageResource(R.drawable.ic_account_def)
-        }else if(!user.isAnonymous){
+        } else if (!user.isAnonymous) {
             tvAccount.text = user.email
             Picasso.get().load(user.photoUrl).transform(CircleTransform()).into(imAccount)
         }
@@ -323,19 +329,19 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         onScrollStateChanged - когда изменяется состояние при скролле
         newState - cостояние списка
      */
-    private fun scrollListener() = with(binding.includeID){
+    private fun scrollListener() = with(binding.includeID) {
 
-        rcView.addOnScrollListener(object: RecyclerView.OnScrollListener(){
+        rcView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
 
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
-                if(!recyclerView.canScrollVertically(SCROLL_DOWN) && newState == RecyclerView.SCROLL_STATE_IDLE){
+                if (!recyclerView.canScrollVertically(SCROLL_DOWN) && newState == RecyclerView.SCROLL_STATE_IDLE) {
 
                     clearUpdate = false
 
                     val adsList = firebaseViewModel.liveAdsData.value!!
 
-                    if(adsList.isNotEmpty()){
+                    if (adsList.isNotEmpty()) {
                         getAdsFromCat(adsList)
                     }
 
@@ -345,23 +351,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     //Определение категории для подгрузки объявлений в scrollListener
-    private fun getAdsFromCat(adsList: ArrayList<Ad>){
+    private fun getAdsFromCat(adsList: ArrayList<Ad>) {
         adsList[0].let {
 
             if (currentCategory == getString(R.string.def)) {
-                firebaseViewModel.loadAllAdsNextPage(it.time)
+                firebaseViewModel.loadAllAdsNextPage(it.time, filterDb)
             } else {
-                val catTime = "${it.category}_${it.time}"
-                firebaseViewModel.loadAllAdsFromCatNextPage(catTime)
+                firebaseViewModel.loadAllAdsFromCatNextPage(it.category!!, it.time, filterDb)
             }
 
         }
     }
 
-
-    private fun navViewSettings() = with(binding.includeID){
-
-    }
 
     override fun onDeleteItem(ad: Ad) {
         firebaseViewModel.deleteItem(ad)

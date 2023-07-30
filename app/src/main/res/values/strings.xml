@@ -62,6 +62,7 @@
 
     <!--Строки для ad-List_item -->
     <string name="price_desc">Цена:</string>
+    <string name="publish_time">Время публикации: </string>
 
 
     <!--Другое -->
@@ -79,6 +80,7 @@
 
     <!--Строки для Filter Activity -->
     <string name="button_filter">Применить фильтр</string>
+    <string name="button_filter_clear">Очистить фильтр</string>
 
 
 </resources>

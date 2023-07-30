@@ -3,7 +3,7 @@ package com.louro_horo24.bulletinboardapp.adapters
 import androidx.recyclerview.widget.DiffUtil
 import com.louro_horo24.bulletinboardapp.model.Ad
 
-class DiffUtilHelper(val oldList: List<Ad>, val newList: List<Ad>): DiffUtil.Callback() {
+class DiffUtilHelper(private val oldList: List<Ad>, private val newList: List<Ad>): DiffUtil.Callback() {
 
     override fun getOldListSize(): Int {
         return oldList.size
