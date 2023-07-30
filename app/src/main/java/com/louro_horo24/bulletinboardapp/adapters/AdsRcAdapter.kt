@@ -14,14 +14,22 @@ import com.louro_horo24.bulletinboardapp.act.EditAdsActivity
 import com.louro_horo24.bulletinboardapp.model.Ad
 import com.louro_horo24.bulletinboardapp.databinding.AdListItemBinding
 import com.squareup.picasso.Picasso
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdHolder>() {
 
     val adArray = ArrayList<Ad>()
+    private var timeFormatter: SimpleDateFormat? = null
+
+    init{
+        timeFormatter = SimpleDateFormat("dd/MM/yyyy - hh:mm", Locale.getDefault())
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdHolder {
         val binding = AdListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return AdHolder(binding, act)
+        return AdHolder(binding, act, timeFormatter!!)
     }
 
     override fun onBindViewHolder(holder: AdHolder, position: Int) {
@@ -32,7 +40,11 @@ class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdH
         return adArray.size
     }
 
-    class AdHolder(val binding: AdListItemBinding, val act: MainActivity): RecyclerView.ViewHolder(binding.root) {
+    class AdHolder(
+        val binding: AdListItemBinding,
+        val act: MainActivity,
+        val formatter: SimpleDateFormat
+    ): RecyclerView.ViewHolder(binding.root) {
 
         fun setData(ad: Ad) = with(binding) {
 
@@ -41,12 +53,20 @@ class AdsRcAdapter(val act: MainActivity): RecyclerView.Adapter<AdsRcAdapter.AdH
             tvTitle.text = ad.title
             tvViewCounter.text = ad.viewsCounter
             tvFavCounter.text = ad.favCounter
+            val publishTime = act.getString(R.string.publish_time) + getTimeForMillis(ad.time)
+            tvPublishTime.text = publishTime
             Picasso.get().load(ad.mainImage).into(mainImage)
 
 
             isFav(ad)
             showEditPanel(isOwner(ad))
             mainOnClick(ad)
+        }
+
+        private fun getTimeForMillis(timeMillis: String): String{
+            val c = Calendar.getInstance()
+            c.timeInMillis = timeMillis.toLong()
+            return formatter.format(c.time)
         }
 
         private fun mainOnClick(ad: Ad) = with(binding){

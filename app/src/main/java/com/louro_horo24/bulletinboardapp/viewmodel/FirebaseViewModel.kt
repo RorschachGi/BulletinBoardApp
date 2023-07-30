@@ -14,8 +14,8 @@ class FirebaseViewModel: ViewModel() {
 
     //Передача данных в liveAdsData ( списка объявлений )
     //Загрузка первой страницы
-    fun loadAllAdsFirstPage(){
-        dbManager.getAllAdsFirstPage(object: DbManager.ReadDataCallback{
+    fun loadAllAdsFirstPage(filter: String){
+        dbManager.getAllAdsFirstPage(filter, object: DbManager.ReadDataCallback{
             override fun readData(list: ArrayList<Ad>) {
                 liveAdsData.value = list
             }
@@ -23,8 +23,8 @@ class FirebaseViewModel: ViewModel() {
         })
     }
 
-    fun loadAllAdsNextPage(time: String){
-        dbManager.getAllAdsNextPage(time, object: DbManager.ReadDataCallback{
+    fun loadAllAdsNextPage(time: String, filter: String){
+        dbManager.getAllAdsNextPage(time, filter, object: DbManager.ReadDataCallback{
             override fun readData(list: ArrayList<Ad>) {
                 liveAdsData.value = list
             }
@@ -33,8 +33,8 @@ class FirebaseViewModel: ViewModel() {
     }
 
     //Получение объявлений по категории
-    fun loadAllAdsFromCat(cat: String){
-        dbManager.getAllAdsFromCatFirstPage(cat, object: DbManager.ReadDataCallback{
+    fun loadAllAdsFromCat(cat: String, filter: String){
+        dbManager.getAllAdsFromCatFirstPage(cat, filter, object: DbManager.ReadDataCallback{
             override fun readData(list: ArrayList<Ad>) {
                 liveAdsData.value = list
             }
@@ -42,8 +42,8 @@ class FirebaseViewModel: ViewModel() {
         })
     }
 
-    fun loadAllAdsFromCatNextPage(catTime: String){
-        dbManager.getAllAdsFromCatNextPage(catTime, object: DbManager.ReadDataCallback{
+    fun loadAllAdsFromCatNextPage(cat: String, time: String, filter: String){
+        dbManager.getAllAdsFromCatNextPage(cat, time, filter,  object: DbManager.ReadDataCallback{
             override fun readData(list: ArrayList<Ad>) {
                 liveAdsData.value = list
             }

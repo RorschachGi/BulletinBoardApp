@@ -21,16 +21,22 @@ class FilterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityFilterBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        init()
-    }
-
-    private fun init(){
         actionBarSettings()
         onClickSelectCountry()
         onClickSelectCity()
         onClickDone()
         getFilter()
+        onClickClear()
     }
+
+//    private fun init(){
+//        actionBarSettings()
+//        onClickSelectCountry()
+//        onClickSelectCity()
+//        onClickDone()
+//        getFilter()
+//        onClickClear()
+//    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == android.R.id.home){
@@ -49,8 +55,8 @@ class FilterActivity : AppCompatActivity() {
         val filter = intent.getStringExtra(FILTER_KEY)
         if(filter != null && filter != "empty"){
             val filterArray = filter.split("_")
-            if(filterArray[0] != getString(R.string.select_country)) tvCountry.text = filterArray[0]
-            if(filterArray[1] != getString(R.string.select_city)) tvCity.text = filterArray[1]
+            if(filterArray[0] != "empty") tvCountry.text = filterArray[0]
+            if(filterArray[1] != "empty") tvCity.text = filterArray[1]
             if(filterArray[2] != "empty") editIndex.setText(filterArray[2])
             checkBoxWithSend.isChecked = filterArray[3].toBoolean()
 
@@ -88,6 +94,16 @@ class FilterActivity : AppCompatActivity() {
            setResult(RESULT_OK, i)
            finish()
        }
+    }
+
+    private fun onClickClear() = with(binding){
+        btClear.setOnClickListener{
+            tvCountry.text = getString(R.string.select_country)
+            tvCity.text = getString(R.string.select_city)
+            editIndex.setText("")
+            checkBoxWithSend.isChecked = false
+            setResult(RESULT_CANCELED)
+        }
     }
 
     private fun createFilter(): String = with(binding){

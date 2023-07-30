@@ -86,6 +86,7 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
         edTitle.setText(ad.title)
         edPrice.setText(ad.price)
         edDescription.setText(ad.description)
+        updateImageCounter(0)
         ImageManager.fieldImageArray(ad, imageAdapter)
     }
 
@@ -155,13 +156,9 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
 
     }
 
-    fun onClickPublish(view: View){
+    fun onClickPublish(view: View) {
         ad = fillAd()
-        if(isEditState){
-            ad?.copy(key = ad?.key)?.let { dbManager.publishAd(it, onPublishFinish()) }
-        }else{
-            uploadImages()
-        }
+        uploadImages()
     }
 
     //Дожидаемся загрузки данных перед закрытием EditAdsActivity
@@ -175,9 +172,9 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
 
     //Заполнение data-класса объявления
     private fun fillAd(): Ad{
-        val ad: Ad
+        val adTemp: Ad
         binding.apply {
-            ad = Ad(
+            adTemp = Ad(
                 tvCountry.text.toString(),
                 tvCity.text.toString(),
                 editTel.text.toString(),
@@ -188,22 +185,23 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
                 edPrice.text.toString(),
                 edDescription.text.toString(),
                 editEmail.text.toString(),
-                "empty",
-                "empty",
-                "empty",
-                dbManager.db.push().key,
+                ad?.mainImage ?:"empty",
+                ad?.image2 ?:"empty",
+                ad?.image3 ?: "empty",
+                ad?.key ?: dbManager.db.push().key,
                 "0",
                 dbManager.auth.uid, //генерация ключа
-                System.currentTimeMillis().toString()
+                ad?.time ?: System.currentTimeMillis().toString()
             )
         }
-        return ad
+        return adTemp
     }
 
     override fun onFragClose(list: ArrayList<Bitmap>) {
         binding.scrolViewMain.visibility = View.VISIBLE
         imageAdapter.updateAdapter(list)
         chooseImageFrag = null
+        updateImageCounter(binding.vpimages.currentItem)
     }
 
     fun openChooseImageFragment(newList : ArrayList<Uri>?){
@@ -217,15 +215,32 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
         fm.commit()
     }
 
-    private fun uploadImages(){
-        if(imageAdapter.mainArray.size == imageIndex){
+    private fun uploadImages() {
+        if (imageIndex == 3) {
             dbManager.publishAd(ad!!, onPublishFinish())
             return
         }
-        val byteArray = prepareImageByteArray(imageAdapter.mainArray[imageIndex])
-        uploadImage(byteArray){
-            //dbManager.publishAd(ad!!, onPublishFinish())
-            nextImage(it.result.toString())
+        val oldUrl = getUrlFromAd()
+        if (imageAdapter.mainArray.size > imageIndex) {
+            val byteArray = prepareImageByteArray(imageAdapter.mainArray[imageIndex])
+            if(oldUrl.startsWith("http")){
+                updateImage(byteArray, oldUrl){
+                    nextImage(it.result.toString())
+                }
+            }else{
+                uploadImage(byteArray) {
+                    //dbManager.publishAd(ad!!, onPublishFinish())
+                    nextImage(it.result.toString())
+                }
+            }
+        } else {
+            if (oldUrl.startsWith("http")) {
+                deleteImageByUrl(oldUrl) {
+                    nextImage("empty")
+                }
+            } else {
+                nextImage("empty")
+            }
         }
     }
 
@@ -243,6 +258,10 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
             1 -> ad = ad?.copy(image2 = uri)
             2 -> ad = ad?.copy(image3 = uri)
         }
+    }
+
+    private fun getUrlFromAd(): String{
+        return listOf(ad?.mainImage!!, ad?.image2!!, ad?.image3!!)[imageIndex]
     }
 
     //FireBase принимает изображения по байтам. Готовим изображение, возвращаем ByteArray
@@ -269,14 +288,37 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
 
     }
 
+    private fun deleteImageByUrl(oldUrl: String, listener: OnCompleteListener<Void>){
+        dbManager.dbStorage.storage
+            .getReferenceFromUrl(oldUrl)
+            .delete().addOnCompleteListener(listener)
+    }
+
+    private fun updateImage(byteArray: ByteArray, url: String, listener: OnCompleteListener<Uri>) {
+        val imStorageRef = dbManager.dbStorage.storage.getReferenceFromUrl(url)
+        val upTask = imStorageRef.putBytes(byteArray)
+        upTask.continueWithTask { task ->
+            imStorageRef.downloadUrl
+        }.addOnCompleteListener(listener)
+    }
+
+
+
     private fun imageChangeCounter(){
         binding.vpimages.registerOnPageChangeCallback(object: ViewPager2.OnPageChangeCallback(){
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
-                val imageCounter = "${position + 1}/${binding.vpimages.adapter?.itemCount}"
-                binding.tvImageCounter.text = imageCounter
+                updateImageCounter(position)
             }
         })
+    }
+
+    private fun updateImageCounter(counter: Int){
+        var index = 1
+        val itemCount = binding.vpimages.adapter?.itemCount
+        if(itemCount == 0) index = 0
+        val imageCounter = "${counter + index}/${itemCount}"
+        binding.tvImageCounter.text = imageCounter
     }
 
 }

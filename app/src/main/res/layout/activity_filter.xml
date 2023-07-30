@@ -162,10 +162,19 @@
                 android:id="@+id/btDone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="60dp"
                 android:backgroundTint="@color/white"
                 android:text="@string/button_filter"
                 android:textColor="@color/green_main" />
+
+            <Button
+                android:id="@+id/btClear"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="60dp"
+                android:backgroundTint="@color/white"
+                android:text="@string/button_filter_clear"
+                android:textColor="@color/green_main" />
+
 
         </LinearLayout>
     </ScrollView>
