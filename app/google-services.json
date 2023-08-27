@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "385926677435-s10ek79iqi1obi40upch65o3kclaotp7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.louro_horo24.bulletinboardapp",
+            "certificate_hash": "778a44e1e7809947578774f49a35acabcaea7b05"
+          }
+        },
+        {
           "client_id": "385926677435-a9mts4lhg6qgaojj3i97q17jb7tnhom8.apps.googleusercontent.com",
           "client_type": 3
         }

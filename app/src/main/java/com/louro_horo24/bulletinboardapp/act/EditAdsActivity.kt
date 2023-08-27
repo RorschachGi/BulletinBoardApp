@@ -157,15 +157,32 @@ class EditAdsActivity : AppCompatActivity(), FragmentCloseInterface {
     }
 
     fun onClickPublish(view: View) {
+        if(isFieldsEmpty()){
+            showToast(resources.getString(R.string.field_empty))
+            return
+        }
+        binding.progressLayout.visibility = View.VISIBLE
         ad = fillAd()
         uploadImages()
+    }
+
+    private fun isFieldsEmpty(): Boolean = with(binding){
+        return tvCountry.text.toString() == getString(R.string.select_country) ||
+                tvCity.text.toString() == getString(R.string.select_city) ||
+                tvCat.text.toString() == getString(R.string.select_category) ||
+                edTitle.text.isEmpty() ||
+                edPrice.text.isEmpty() ||
+                editIndex.text.isEmpty() ||
+                edDescription.text.isEmpty() ||
+                editTel.text.isEmpty()
     }
 
     //Дожидаемся загрузки данных перед закрытием EditAdsActivity
     private fun onPublishFinish(): DbManager.FinishWorkListener{
         return object: DbManager.FinishWorkListener{
-            override fun onFinish() {
-                finish()
+            override fun onFinish(isDone: Boolean) {
+                binding.progressLayout.visibility = View.GONE
+                if(isDone) finish()
             }
         }
     }

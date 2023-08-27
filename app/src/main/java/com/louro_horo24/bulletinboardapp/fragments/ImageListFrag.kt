@@ -26,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-//private val fragCloseInterface: FragmentCloseInterface, private val newList: ArrayList<Uri>?
 class ImageListFrag(private val fragCloseInterface: FragmentCloseInterface) : Fragment(), AdapterCallback {
 
     lateinit var binding: ListImageFragBinding
@@ -42,7 +41,7 @@ class ImageListFrag(private val fragCloseInterface: FragmentCloseInterface) : Fr
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = ListImageFragBinding.inflate(layoutInflater)
+        binding = ListImageFragBinding.inflate(layoutInflater, container, false)
         return binding.root
     }
 

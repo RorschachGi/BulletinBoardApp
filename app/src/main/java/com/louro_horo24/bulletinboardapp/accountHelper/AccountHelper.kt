@@ -188,7 +188,7 @@ class AccountHelper(activity: MainActivity) {
                 act.myAuth.signInWithCredential(credential).addOnCompleteListener { task ->
                     if(task.isSuccessful){
 
-                        Toast.makeText(act, "Sign In done", Toast.LENGTH_LONG).show()
+                        Toast.makeText(act, act.resources.getString(R.string.signIn_success), Toast.LENGTH_LONG).show()
                         act.uiUpdate(task.result?.user)
 
                     }else{

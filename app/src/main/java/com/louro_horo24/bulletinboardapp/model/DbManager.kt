@@ -32,7 +32,7 @@ class DbManager{
                     val adFilter = FilterManager.createFilter(ad) //cars_12432534
                     db.child(ad.key ?: "empty").child(FILTER_NODE).setValue(adFilter)
                         .addOnCompleteListener {
-                            finishListener.onFinish()
+                            finishListener.onFinish(true)
                         }
 
                 }
@@ -64,7 +64,7 @@ class DbManager{
             auth.uid?.let{
                 uid -> db.child(it).child(FAVS_NODE).child(uid).setValue(uid).addOnCompleteListener {
                     if(it.isSuccessful){
-                        finishWorkListener.onFinish()
+                        finishWorkListener.onFinish(true)
                     }
                 }
             }
@@ -77,7 +77,7 @@ class DbManager{
             auth.uid?.let{
                     uid -> db.child(it).child(FAVS_NODE).child(uid).removeValue().addOnCompleteListener {
                     if(it.isSuccessful){
-                        finishWorkListener.onFinish()
+                        finishWorkListener.onFinish(it.isSuccessful)
                     }
                 }
             }
@@ -176,8 +176,14 @@ class DbManager{
     //Удаление объявления
     fun deleteAd(ad: Ad, listener: FinishWorkListener){
         if(ad.key == null || ad.uid == null) return
-        db.child(ad.key).child(ad.uid).removeValue().addOnCompleteListener {
-            if(it.isSuccessful) listener.onFinish()
+        val map = mapOf(
+            "/adFilter" to null,
+            "/info" to null,
+            "/favs" to null,
+            "/${ad.uid}" to null,
+        )
+        db.child(ad.key).updateChildren(map).addOnCompleteListener {
+            if(it.isSuccessful) listener.onFinish(true)
         }
     }
 
@@ -266,7 +272,7 @@ class DbManager{
 
     //Дожидаемся загрузки данных перед закрытием EditAdsActivity
     interface FinishWorkListener{
-        fun onFinish()
+        fun onFinish(isDone: Boolean)
     }
 
     companion object{
