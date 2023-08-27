@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="blue_light">#3f497a</color>
     <color name="color_red">#D8594F</color>
+    <color name="progress_background">#A8494747</color>
 
     <color name="green_main">#16BF54</color>
 

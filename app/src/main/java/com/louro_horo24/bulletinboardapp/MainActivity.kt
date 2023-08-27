@@ -27,6 +27,7 @@ import com.louro_horo24.bulletinboardapp.accountHelper.AccountHelper
 import com.louro_horo24.bulletinboardapp.act.DescriptionActivity
 import com.louro_horo24.bulletinboardapp.act.EditAdsActivity
 import com.louro_horo24.bulletinboardapp.act.FilterActivity
+import com.louro_horo24.bulletinboardapp.act.showToast
 import com.louro_horo24.bulletinboardapp.adapters.AdsRcAdapter
 import com.louro_horo24.bulletinboardapp.databinding.ActivityMainBinding
 import com.louro_horo24.bulletinboardapp.dialoghelper.DialogConst
@@ -124,7 +125,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun initViewModel() {
-        firebaseViewModel.liveAdsData.observe(this, {
+        firebaseViewModel.liveAdsData.observe(this) {
             val list = getAdsByCategory(it)
             if (!clearUpdate) {
                 adapter.updateAdapter(list)
@@ -133,7 +134,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             }
             binding.includeID.tvEmpty.visibility =
                 if (adapter.itemCount == 0) View.VISIBLE else View.GONE
-        })
+        }
     }
 
     //Оставляем только объявления только конкретной категории при необходимости
@@ -180,12 +181,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     private fun bottomMenuOnClick() = with(binding) {
-        includeID.bNavView.setOnNavigationItemSelectedListener { item ->
+        includeID.bNavView.setOnItemSelectedListener { item ->
             clearUpdate = true
             when (item.itemId) {
                 R.id.id_new_add -> {
-                    val i = Intent(this@MainActivity, EditAdsActivity::class.java)
-                    startActivity(i)
+                    if (myAuth.currentUser != null) {
+                        if (!myAuth.currentUser?.isAnonymous!!) {
+                            val i = Intent(this@MainActivity, EditAdsActivity::class.java)
+                            startActivity(i)
+                        } else {
+                            showToast(resources.getString(R.string.anonymous_error))
+                        }
+                    } else {
+                        showToast(resources.getString(R.string.error_sign))
+                    }
+
                 }
                 R.id.id_my_ads -> {
                     firebaseViewModel.loadMyAds()
@@ -207,12 +217,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     //Инициализируем RecyclerView
     private fun initRecyclerView() {
-
         binding.apply {
-
             includeID.rcView.layoutManager = LinearLayoutManager(this@MainActivity)
             includeID.rcView.adapter = adapter
-
         }
     }
 
@@ -238,8 +245,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         when (item.itemId) {
 
             R.id.id_my_ads -> {
-                Toast.makeText(this, "Pressed id_my_ads", Toast.LENGTH_SHORT).show()
+                firebaseViewModel.loadMyAds()
                 binding.includeID.toolbar.title = getString(R.string.ad_my_ads)
+            }
+
+            R.id.id_my_favourites -> {
+                firebaseViewModel.loadMyFavs()
+                binding.includeID.toolbar.title = getString(R.string.ad_my_favourites)
             }
 
             R.id.id_car -> {

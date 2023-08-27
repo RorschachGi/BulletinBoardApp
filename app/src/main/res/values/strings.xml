@@ -24,6 +24,9 @@
     <string name="open">Open</string>
     <string name="close">Close</string>
     <string name="anon_sign">Гость</string>
+    <string name="error_sign">Ошибка регистрации</string>
+    <string name="anonymous_error">Гость не может подавать объявления. Пожалуйста зарегистрируйтесь.</string>
+    <string name="signIn_success">Успешный вход</string>
 
     <!--Строки для Sign Dialog -->
     <string name="email_hint">Email</string>
@@ -59,6 +62,8 @@
     <string name="with_send">C отправкой</string>
     <string name="delivery">Доставка</string>
     <string name="publish">Опубликовать</string>
+    <string name="field_empty">Все поля должны быть заполнены!</string>
+
 
     <!--Строки для ad-List_item -->
     <string name="price_desc">Цена:</string>
